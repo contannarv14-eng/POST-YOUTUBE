@@ -10,14 +10,14 @@ logger = logging.getLogger(__name__)
 
 # Cria a instância do Flask
 app = Flask(__name__)
-CORS(app)  # Libera acesso de outros domínios (como HTML no navegador)
+CORS(app)  # Libera o acesso do HTML pelo navegador (CORS)
 
-# Rota para renderizar a página de teste
+# ✅ Rota para exibir a interface HTML com o botão
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
 
-# Rota para processar vídeos via POST
+# ✅ Rota para processar vídeos via webhook
 @app.route("/webhook", methods=["POST"])
 def webhook():
     try:
@@ -33,7 +33,7 @@ def webhook():
 
         logger.info(f"Recebido vídeo para processamento: {video_url}")
 
-        # Inicia o processamento do vídeo em segundo plano
+        # Processamento assíncrono em uma nova thread
         threading.Thread(target=process_video, args=(video_url,)).start()
 
         return jsonify({"status": "Processing started"}), 202
@@ -42,13 +42,6 @@ def webhook():
         logger.error(f"Erro no webhook: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
 
-# Executa localmente (não afeta Render)
+# Executa localmente (não usado no Render)
 if __name__ == "__main__":
     app.run(debug=True)
-
-        return jsonify({"status": "Processing started"}), 202
-
-    except Exception as e:
-        logger.error(f"Erro no webhook: {str(e)}")
-        return jsonify({"error": "Internal server error"}), 500
-
