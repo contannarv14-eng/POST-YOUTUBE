@@ -5,11 +5,16 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from oauth2client.client import OAuth2Credentials
 
-# Função principal que orquestra tudo
-def process_video(youtube_url, start_time="00:00:00", duration="00:01:00", title="Short Video", description="Clipped from original"):
+def process_video(
+    youtube_url,
+    start_time="00:00:00",
+    duration="00:01:00",
+    title="Short Video",
+    description="Clipped from original"
+):
     try:
         # 1. Baixar o vídeo do YouTube
-        print("Baixando vídeo...")
+        print("📥 Baixando vídeo...")
         ydl_opts = {
             'outtmpl': 'input_video.%(ext)s',
             'format': 'bestvideo+bestaudio/best',
@@ -22,7 +27,7 @@ def process_video(youtube_url, start_time="00:00:00", duration="00:01:00", title
         output_path = "output_clip.mp4"
 
         # 2. Cortar o vídeo com ffmpeg
-        print("Cortando vídeo...")
+        print("✂️ Cortando vídeo...")
         subprocess.run([
             'ffmpeg',
             '-i', input_path,
@@ -32,12 +37,12 @@ def process_video(youtube_url, start_time="00:00:00", duration="00:01:00", title
             '-preset', 'fast',
             '-c:a', 'aac',
             '-b:a', '128k',
-            '-y',  # sobrescreve se já existir
+            '-y',
             output_path
         ], check=True)
 
-        # 3. Autenticação YouTube
-        print("Autenticando no YouTube...")
+        # 3. Autenticação no YouTube
+        print("🔐 Autenticando no YouTube...")
         credentials = OAuth2Credentials(
             access_token=os.getenv("YOUTUBE_ACCESS_TOKEN"),
             client_id=os.getenv("YOUTUBE_CLIENT_ID"),
@@ -50,8 +55,8 @@ def process_video(youtube_url, start_time="00:00:00", duration="00:01:00", title
 
         youtube = build('youtube', 'v3', credentials=credentials)
 
-        # 4. Fazer upload para o YouTube
-        print("Enviando para o YouTube...")
+        # 4. Upload do vídeo
+        print("📤 Enviando para o YouTube...")
         body = {
             'snippet': {
                 'title': title,
@@ -74,14 +79,22 @@ def process_video(youtube_url, start_time="00:00:00", duration="00:01:00", title
             if status:
                 print(f"Progresso: {int(status.progress() * 100)}%")
 
-        print("Upload finalizado!")
-        print("Vídeo publicado com ID:", response.get("id"))
+        video_id = response.get("id")
+        print("✅ Upload finalizado!")
+        print("📺 Vídeo publicado com ID:", video_id)
 
-        return {"status": "success", "video_id": response.get("id")}
+        return {
+            "status": "success",
+            "video_id": video_id,
+            "video_url": f"https://youtube.com/watch?v={video_id}"
+        }
 
     except Exception as e:
-        print("Erro no processamento:", str(e))
-        return {"status": "error", "message": str(e)}
+        print("❌ Erro no processamento:", str(e))
+        return {
+            "status": "error",
+            "message": str(e)
+        }
 
     print(f"✂️ Vídeo cortado salvo em: {cut_path}")
 
