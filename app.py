@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import threading
 import logging
@@ -10,14 +10,14 @@ logger = logging.getLogger(__name__)
 
 # Cria a instância do Flask
 app = Flask(__name__)
-CORS(app)  # 👉 Libera o acesso do HTML pelo navegador (CORS)
+CORS(app)  # Libera acesso de outros domínios (como HTML no navegador)
 
-# Rota raiz para ver se está online
+# Rota para renderizar a página de teste
 @app.route("/", methods=["GET"])
 def index():
-    return jsonify({"message": "POST-YOUTUBE API is online"}), 200
+    return render_template("index.html")
 
-# Rota para processar vídeos
+# Rota para processar vídeos via POST
 @app.route("/webhook", methods=["POST"])
 def webhook():
     try:
@@ -33,8 +33,18 @@ def webhook():
 
         logger.info(f"Recebido vídeo para processamento: {video_url}")
 
-        # Inicia o processamento em thread separada
+        # Inicia o processamento do vídeo em segundo plano
         threading.Thread(target=process_video, args=(video_url,)).start()
+
+        return jsonify({"status": "Processing started"}), 202
+
+    except Exception as e:
+        logger.error(f"Erro no webhook: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
+# Executa localmente (não afeta Render)
+if __name__ == "__main__":
+    app.run(debug=True)
 
         return jsonify({"status": "Processing started"}), 202
 
