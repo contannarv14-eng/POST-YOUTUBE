@@ -1,72 +1,87 @@
 import os
+import yt_dlp
 import subprocess
-import uuid
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from oauth2client.client import OAuth2Credentials
 
+# Função principal que orquestra tudo
+def process_video(youtube_url, start_time="00:00:00", duration="00:01:00", title="Short Video", description="Clipped from original"):
+    try:
+        # 1. Baixar o vídeo do YouTube
+        print("Baixando vídeo...")
+        ydl_opts = {
+            'outtmpl': 'input_video.%(ext)s',
+            'format': 'bestvideo+bestaudio/best',
+            'merge_output_format': 'mp4'
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([youtube_url])
 
-def upload_to_youtube(video_path, title="Shorts Automático"):
-    credentials = OAuth2Credentials(
-        access_token=None,
-        client_id=os.environ.get("YOUTUBE_CLIENT_ID"),
-        client_secret=os.environ.get("YOUTUBE_CLIENT_SECRET"),
-        refresh_token=os.environ.get("YOUTUBE_REFRESH_TOKEN"),
-        token_expiry=None,
-        token_uri='https://oauth2.googleapis.com/token',
-        user_agent=''
-    )
+        input_path = "input_video.mp4"
+        output_path = "output_clip.mp4"
 
-    youtube = build('youtube', 'v3', credentials=credentials)
+        # 2. Cortar o vídeo com ffmpeg
+        print("Cortando vídeo...")
+        subprocess.run([
+            'ffmpeg',
+            '-i', input_path,
+            '-ss', start_time,
+            '-t', duration,
+            '-c:v', 'libx264',
+            '-preset', 'fast',
+            '-c:a', 'aac',
+            '-b:a', '128k',
+            '-y',  # sobrescreve se já existir
+            output_path
+        ], check=True)
 
-    body = dict(
-        snippet=dict(
-            title=title,
-            description="Corte automático de vídeo viral",
-            tags=["shorts", "viral", "automação"],
-            categoryId="24"  # Categoria: Entretenimento
-        ),
-        status=dict(
-            privacyStatus="public"  # ou "unlisted", "private"
+        # 3. Autenticação YouTube
+        print("Autenticando no YouTube...")
+        credentials = OAuth2Credentials(
+            access_token=os.getenv("YOUTUBE_ACCESS_TOKEN"),
+            client_id=os.getenv("YOUTUBE_CLIENT_ID"),
+            client_secret=os.getenv("YOUTUBE_CLIENT_SECRET"),
+            refresh_token=os.getenv("YOUTUBE_REFRESH_TOKEN"),
+            token_expiry=None,
+            token_uri="https://oauth2.googleapis.com/token",
+            user_agent=""
         )
-    )
 
-    media = MediaFileUpload(video_path, chunksize=-1, resumable=True)
+        youtube = build('youtube', 'v3', credentials=credentials)
 
-    request = youtube.videos().insert(
-        part="snippet,status",
-        body=body,
-        media_body=media
-    )
+        # 4. Fazer upload para o YouTube
+        print("Enviando para o YouTube...")
+        body = {
+            'snippet': {
+                'title': title,
+                'description': description,
+                'tags': ['Shorts', 'Clips', 'Automated'],
+                'categoryId': '22'  # People & Blogs
+            },
+            'status': {
+                'privacyStatus': 'public',
+                'madeForKids': False
+            }
+        }
 
-    response = None
-    while response is None:
-        status, response = request.next_chunk()
-        if status:
-            print(f"📤 Enviando: {int(status.progress() * 100)}%")
+        media = MediaFileUpload(output_path, chunksize=-1, resumable=True, mimetype='video/mp4')
+        request = youtube.videos().insert(part="snippet,status", body=body, media_body=media)
+        response = None
 
-    print("✅ Vídeo publicado com sucesso! ID:", response['id'])
+        while response is None:
+            status, response = request.next_chunk()
+            if status:
+                print(f"Progresso: {int(status.progress() * 100)}%")
 
+        print("Upload finalizado!")
+        print("Vídeo publicado com ID:", response.get("id"))
 
-def process_video(video_url):
-    uid = str(uuid.uuid4())
-    output_dir = f"upload/{uid}"
-    os.makedirs(output_dir, exist_ok=True)
+        return {"status": "success", "video_id": response.get("id")}
 
-    video_path = f"{output_dir}/video.mp4"
-    subprocess.run(["yt-dlp", "-o", video_path, video_url])
-
-    cut_path = f"{output_dir}/cut.mp4"
-    subprocess.run([
-        "ffmpeg", "-ss", "00:00:10", "-i", video_path,
-        "-t", "60", "-c", "copy", cut_path
-    ])
-
-    print(f"✂️ Vídeo cortado salvo em: {cut_path}")
-
-    upload_to_youtube(cut_path, title="Shorts automático via IA")
-
-    ])
+    except Exception as e:
+        print("Erro no processamento:", str(e))
+        return {"status": "error", "message": str(e)}
 
     print(f"✂️ Vídeo cortado salvo em: {cut_path}")
 
