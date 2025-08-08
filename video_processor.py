@@ -95,8 +95,3 @@ def process_video(
             "status": "error",
             "message": str(e)
         }
-
-    print(f"✂️ Vídeo cortado salvo em: {cut_path}")
-
-    upload_to_youtube(cut_path, title="Shorts automático via IA")
-
