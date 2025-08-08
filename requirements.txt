@@ -1,3 +1,5 @@
 Flask
 yt-dlp
 gunicorn
+google-api-python-client
+oauth2client
