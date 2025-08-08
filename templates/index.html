@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Testar Sistema de Shorts</title>
+</head>
+<body>
+  <h1>Testar Sistema Automático de Shorts do YouTube</h1>
+  <button onclick="enviarVideo()">Enviar Vídeo</button>
+
+  <p id="status"></p>
+
+  <script>
+    function enviarVideo() {
+      const status = document.getElementById("status");
+      status.innerText = "Enviando vídeo... Aguarde.";
+
+      fetch("/webhook", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          video_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        })
+      })
+      .then(response => {
+        if (response.ok) {
+          status.innerText = "✅ Vídeo enviado com sucesso! Aguarde o upload no seu canal.";
+        } else {
+          status.innerText = "❌ Erro ao enviar vídeo. Verifique se o sistema está online.";
+        }
+      })
+      .catch(error => {
+        status.innerText = "❌ Erro ao conectar ao servidor.";
+        console.error(error);
+      });
+    }
+  </script>
+</body>
+</html>
