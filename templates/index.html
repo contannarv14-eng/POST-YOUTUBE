@@ -6,6 +6,9 @@
 </head>
 <body>
   <h1>Testar Sistema Automático de Shorts do YouTube</h1>
+
+  <input type="text" id="videoUrl" placeholder="Cole o link do vídeo do YouTube aqui" style="width:300px; padding:8px;">
+  <br><br>
   <button onclick="enviarVideo()">Enviar Vídeo</button>
 
   <p id="status"></p>
@@ -13,7 +16,16 @@
   <script>
     function enviarVideo() {
       const status = document.getElementById("status");
-      status.innerText = "Enviando vídeo... Aguarde.";
+      const videoUrl = document.getElementById("videoUrl").value.trim();
+
+      if (!videoUrl) {
+        status.innerText = "⚠️ Cole o link do vídeo primeiro.";
+        status.style.color = "orange";
+        return;
+      }
+
+      status.innerText = "⏳ Enviando vídeo... Aguarde.";
+      status.style.color = "black";
 
       fetch("/webhook", {
         method: "POST",
@@ -21,21 +33,26 @@
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          video_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+          video_url: videoUrl
         })
       })
-      .then(response => {
-        if (response.ok) {
-          status.innerText = "✅ Vídeo enviado com sucesso! Aguarde o upload no seu canal.";
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === "success") {
+          status.innerHTML = `✅ Vídeo enviado com sucesso! <a href="${data.video_url}" target="_blank">Assistir no YouTube</a>`;
+          status.style.color = "green";
         } else {
-          status.innerText = "❌ Erro ao enviar vídeo. Verifique se o sistema está online.";
+          status.innerText = `❌ Erro: ${data.message || "Falha no envio."}`;
+          status.style.color = "red";
         }
       })
       .catch(error => {
         status.innerText = "❌ Erro ao conectar ao servidor.";
+        status.style.color = "red";
         console.error(error);
       });
     }
   </script>
 </body>
 </html>
+
