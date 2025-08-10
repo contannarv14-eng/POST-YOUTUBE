@@ -3,19 +3,29 @@ from flask_cors import CORS
 import logging
 from video_processor import process_video
 
-# Configuração de logs
+# ==============================
+# CONFIGURAÇÃO DO SERVIDOR
+# ==============================
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)  # Libera o acesso do HTML pelo navegador (CORS)
+CORS(app)  # Permite chamadas do navegador
 
-# Página inicial com interface HTML
+# ==============================
+# ROTA PÁGINA INICIAL
+# ==============================
 @app.route("/", methods=["GET"])
 def index():
-    return render_template("index.html")
+    try:
+        return render_template("index.html")
+    except Exception as e:
+        logger.error(f"Erro ao carregar página: {str(e)}")
+        return "<h1>API do YouTube está online</h1>", 200
 
-# Webhook para processar vídeos
+# ==============================
+# ROTA WEBHOOK PARA PROCESSAR VÍDEO
+# ==============================
 @app.route("/webhook", methods=["POST"])
 def webhook():
     try:
@@ -26,28 +36,33 @@ def webhook():
 
         video_url = data.get("video_url")
         if not video_url:
-            logger.warning("Requisição sem 'video_url'")
+            logger.warning("Campo 'video_url' não encontrado")
             return jsonify({"error": "Missing video_url"}), 400
 
-        logger.info(f"Recebido vídeo para processamento: {video_url}")
+        logger.info(f"🎬 Recebido vídeo para processamento: {video_url}")
 
-        # Processa o vídeo e aguarda o retorno
+        # Chama função que baixa, corta e envia para o YouTube
         result = process_video(video_url)
 
         if result.get("status") == "success":
             video_id = result.get("video_id")
+            logger.info(f"✅ Vídeo enviado com sucesso: {video_id}")
             return jsonify({
                 "status": "success",
                 "video_id": video_id,
                 "video_url": f"https://www.youtube.com/watch?v={video_id}"
             }), 200
         else:
+            logger.error(f"❌ Erro no processamento: {result}")
             return jsonify(result), 500
 
     except Exception as e:
-        logger.error(f"Erro no webhook: {str(e)}")
+        logger.error(f"Erro interno no webhook: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
 
-# Executa localmente
+# ==============================
+# EXECUTAR LOCALMENTE
+# ==============================
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
+
