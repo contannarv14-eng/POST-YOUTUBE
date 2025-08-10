@@ -7,10 +7,7 @@
 <body>
   <h1>Testar Sistema Automático de Shorts do YouTube</h1>
 
-  <label for="videoUrl">Cole o link do vídeo do YouTube:</label>
-  <input type="text" id="videoUrl" placeholder="https://www.youtube.com/watch?v=..." style="width: 400px;">
-  <br><br>
-
+  <input type="text" id="videoUrl" placeholder="Cole o link do vídeo aqui" style="width: 300px;">
   <button onclick="enviarVideo()">Enviar Vídeo</button>
 
   <p id="status"></p>
@@ -21,7 +18,7 @@
       const videoUrl = document.getElementById("videoUrl").value.trim();
 
       if (!videoUrl) {
-        status.innerText = "❌ Por favor, insira o link do vídeo.";
+        status.innerText = "❌ Por favor, cole um link de vídeo.";
         return;
       }
 
@@ -50,4 +47,3 @@
 </body>
 </html>
 
-</html>
