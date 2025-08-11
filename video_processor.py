@@ -48,7 +48,7 @@ def process_video(
         logger.info(f"🎯 Link final para download: {youtube_url}")
 
         # ==============================
-        # 1. BAIXAR VÍDEO DO YOUTUBE
+        # 1. BAIXAR VÍDEO DO YOUTUBE (com bypass de restrições)
         # ==============================
         ydl_opts = {
             'outtmpl': 'input_video.%(ext)s',
@@ -56,8 +56,19 @@ def process_video(
             'merge_output_format': 'mp4',
             'quiet': True,
             'no_warnings': True,
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+            'geo_bypass': True,           # Ignora bloqueio de região
+            'age_limit': 0,               # Ignora restrição de idade
+            'ignoreerrors': True,         # Continua mesmo se houver erro
+            'retries': 10,                 # Mais tentativas
+            'fragment_retries': 10,        # Retentativas em fragmentos
+            'sleep_interval_requests': 5,  # Pausa entre requisições
         }
+
+        # Ativar download autenticado se houver cookies
+        if os.path.exists('cookies.txt'):
+            ydl_opts['cookiefile'] = 'cookies.txt'
+            logger.info("🍪 Cookies detectados — ativando download autenticado.")
 
         attempt = 0
         while attempt < max_retries:
