@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import logging
+import os
 from video_processor import process_video
 
 # ==============================
@@ -61,8 +62,8 @@ def webhook():
         return jsonify({"error": "Internal server error"}), 500
 
 # ==============================
-# EXECUTAR LOCALMENTE
+# EXECUTAR LOCALMENTE OU NO RENDER
 # ==============================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
-
+    port = int(os.environ.get("PORT", 5000))  # usa a porta do Render ou 5000 localmente
+    app.run(host="0.0.0.0", port=port, debug=True)
