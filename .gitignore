@@ -2,3 +2,4 @@
 cookies.txt
 __pycache__/
 *.pycclient_secret.json
+client_secret.json
