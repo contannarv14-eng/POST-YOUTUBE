@@ -1,4 +1,4 @@
 .env
 cookies.txt
 __pycache__/
-*.pyc
+*.pycclient_secret.json
