@@ -3,3 +3,13 @@ cookies.txt
 __pycache__/
 *.pycclient_secret.json
 client_secret.json
+# Secrets (NÃO versionar)
+.env
+tokens.json
+tokens.env
+client_secret.json
+credentials.json
+
+# Cache/artefatos
+__pycache__/
+*.pyc
