@@ -3,6 +3,8 @@ from flask_cors import CORS
 import logging
 import os
 from video_processor import process_video
+from googleapiclient.discovery import build
+from google.oauth2.credentials import Credentials
 
 # ==============================
 # CONFIGURAÇÃO DO SERVIDOR
@@ -60,6 +62,36 @@ def webhook():
     except Exception as e:
         logger.error(f"Erro interno no webhook: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
+
+
+# ==============================
+# ROTA TESTE OAUTH
+# ==============================
+@app.route("/test_oauth", methods=["GET"])
+def test_oauth():
+    try:
+        # Detecta se está usando Secret File no Render
+        token_path = "/etc/secrets/tokens.json" if os.path.exists("/etc/secrets/tokens.json") else "tokens.json"
+
+        scopes = [
+            "https://www.googleapis.com/auth/youtube.upload",
+            "https://www.googleapis.com/auth/youtube"
+        ]
+
+        creds = Credentials.from_authorized_user_file(token_path, scopes)
+        youtube = build("youtube", "v3", credentials=creds)
+
+        request = youtube.channels().list(part="snippet", mine=True)
+        response = request.execute()
+
+        canal_nome = response["items"][0]["snippet"]["title"]
+
+        return jsonify({"status": "OK", "mensagem": f"OAuth funcionando! Canal conectado: {canal_nome}"})
+
+    except Exception as e:
+        logger.error(f"Erro ao testar OAuth: {str(e)}")
+        return jsonify({"status": "erro", "mensagem": str(e)}), 500
+
 
 # ==============================
 # EXECUTAR LOCALMENTE OU NO RENDER
